@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# Version commits and version PRs require write access. Kept off the CI
+# workflow so ordinary pull request validation stays read-only.
+permissions:
+  contents: write
+  pull-requests: write
+
+# A single release run per ref: concurrent runs must never race to publish
+# the same versions. In-progress releases are never cancelled mid-publish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Publish only from the canonical repository. This workflow triggers
+    # solely on pushes to main (never on pull_request events), so untrusted
+    # PR code cannot reach publication; the guard additionally keeps forks
+    # pushing to their own default branch from running releases.
+    if: github.repository == 'hobiri/pluma'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        # Strict install: releases must be reproducible. Fails fast (instead
+        # of publishing from a partially resolved tree) until pnpm-lock.yaml
+        # exists; generating it is blocked on @hobiri/website-runtime
+        # registry availability (see README).
+        run: pnpm install --frozen-lockfile
+
+      - name: Create version PR or publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          # version-packages runs `changeset version` (no build needed);
+          # release builds every package in dependency order and then runs
+          # `changeset publish`, so @hobiri/pluma-vite dist/ always exists
+          # before its tarball is created. Publication order follows the
+          # workspace dependency graph (dependents after dependencies).
+          # @hobiri/website-runtime is external and is never published here.
+          version: pnpm version-packages
+          publish: pnpm release
+          # No GitHub Releases or tags: there is no tag-based release strategy
+          # in this repository (copy-own template, no upgrade path).
+          createGithubReleases: false
+        env:
+          # Required repository secret: an npm automation token able to
+          # publish the @hobiri scope. A missing secret fails the publish
+          # step loudly; publication is never skipped silently. Trusted
+          # publishing (OIDC) is not configured; see README before switching.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

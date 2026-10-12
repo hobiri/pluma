@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
 
+# Read-only: CI verifies changes and must never publish packages.
 permissions:
   contents: read
 
@@ -15,6 +16,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          # Full history so `changeset status --since=origin/main` can
+          # resolve the base branch on both push and pull_request events.
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -28,19 +33,36 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
+        # Plain install until pnpm-lock.yaml can be generated and committed
+        # (currently blocked: @hobiri/website-runtime is not on the registry).
+        # Tighten to --frozen-lockfile once the lockfile exists.
         run: pnpm install
 
       - name: Build pluma-vite
+        # Template typecheck, tests, and builds resolve @hobiri/pluma-vite
+        # through its generated dist/ declarations, so it builds first.
         run: pnpm --filter @hobiri/pluma-vite build
 
-      - name: Typecheck Pluma packages
-        run: pnpm --filter @hobiri/pluma-vite --filter @hobiri/pluma-template typecheck
+      - name: Typecheck
+        run: pnpm typecheck
 
-      - name: Test pluma-vite
-        run: pnpm --filter @hobiri/pluma-vite test
+      - name: Test
+        run: pnpm test
 
-      - name: Test template
-        run: pnpm --filter @hobiri/pluma-template test
+      - name: Build
+        run: pnpm build
 
-      - name: Build template
-        run: pnpm --filter @hobiri/pluma-template build
+      - name: Lint template
+        run: pnpm --filter @hobiri/pluma-template lint
+
+      - name: Check formatting
+        run: pnpm --filter @hobiri/pluma-template format:check
+
+      - name: Validate changesets
+        # Fails loudly on an invalid config or on malformed changesets for
+        # changed packages; exits cleanly when there is simply nothing
+        # pending (e.g. documentation-only changes). Changesets that touch
+        # no changed package surface strictly at version time instead,
+        # before anything is published. Plain `changeset status` is not
+        # used because pull request checkouts have no local `main` ref.
+        run: pnpm changeset status --since=origin/main

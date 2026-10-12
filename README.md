@@ -57,6 +57,32 @@ Published manifests must contain explicit registry versions (no
 requires `@hobiri/website-runtime` and `@hobiri/pluma-vite` to be available
 from the configured registry at the pinned versions.
 
+## Changesets & releases
+
+Versioning and changelogs are driven by [Changesets](https://github.com/changesets/changesets).
+The two packages version independently; `@hobiri/website-runtime` is external
+and is never versioned or published here.
+
+```sh
+pnpm changeset          # describe the intended release(s) for your change
+pnpm changeset status   # validate pending changesets locally (CI runs the
+                        # equivalent check as `changeset status --since=origin/main`)
+```
+
+Select only the packages your change affects (`patch` for fixes, `minor` for
+features, `major` for breaking changes; select both packages when both are
+affected). Documentation-only changes need no changeset.
+
+Merging a PR with changesets opens a `Version Packages` PR; merging that PR
+publishes the bumped packages from `main` in dependency order
+(`@hobiri/pluma-vite` before `@hobiri/pluma-template`).
+
+Releases need an `NPM_TOKEN` repository secret (npm automation token for the
+`@hobiri` scope). Until `@hobiri/website-runtime@0.1.0` is available from the
+registry, `pnpm install` cannot resolve the full workspace and no
+`pnpm-lock.yaml` can be generated; publish the runtime from its own workspace
+first, then run `pnpm install` here and commit the lockfile.
+
 ## License
 
 MIT — see each package's `LICENSE` file.
