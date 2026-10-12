@@ -1,0 +1,77 @@
+{
+  "name": "@hobiri/pluma-template",
+  "version": "0.1.0",
+  "description": "Pluma by Hobiri: minimal Comity website starter on Vite, Hono, Preact, and Cloudflare Pages.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --mode client && vite build",
+    "preview": "wrangler pages dev dist",
+    "deploy": "$npm_execpath run build && wrangler pages deploy dist --branch production",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "@comity/content": "0.9.1",
+    "@comity/html-preact": "0.9.1",
+    "@comity/http": "0.9.1",
+    "@comity/http-hono": "0.9.1",
+    "@comity/hydration": "0.9.1",
+    "@comity/hydration-preact": "0.9.1",
+    "@comity/primitives": "0.9.1",
+    "@comity/router": "0.9.1",
+    "@comity/seo": "0.9.0",
+    "@hobiri/website-runtime": "0.1.0",
+    "cubito": "^0.6.3",
+    "hono": "^4.13.7",
+    "preact": "^10.29.8",
+    "vite": "^7.3.6"
+  },
+  "devDependencies": {
+    "@hono/vite-build": "^1.11.1",
+    "@hono/vite-dev-server": "^0.23.0",
+    "@hobiri/pluma-vite": "0.1.0",
+    "@mdx-js/preact": "^3.1.1",
+    "@mdx-js/rollup": "^3.1.1",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^25.9.5",
+    "@typescript-eslint/eslint-plugin": "8.70.0",
+    "@typescript-eslint/parser": "8.70.0",
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.6",
+    "remark-gfm": "^4.0.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.129.0"
+  },
+  "files": [
+    "src",
+    "public",
+    "wrangler.jsonc",
+    "tsconfig.json",
+    "vite.config.ts",
+    "eslint.config.js",
+    ".prettierrc",
+    ".prettierignore"
+  ],
+  "keywords": [
+    "comity",
+    "hobiri",
+    "pluma",
+    "vite",
+    "preact",
+    "hono",
+    "cloudflare",
+    "starter"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

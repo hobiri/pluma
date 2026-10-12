@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build pluma-vite
+        run: pnpm --filter @hobiri/pluma-vite build
+
+      - name: Typecheck Pluma packages
+        run: pnpm --filter @hobiri/pluma-vite --filter @hobiri/pluma-template typecheck
+
+      - name: Test pluma-vite
+        run: pnpm --filter @hobiri/pluma-vite test
+
+      - name: Test template
+        run: pnpm --filter @hobiri/pluma-template test
+
+      - name: Build template
+        run: pnpm --filter @hobiri/pluma-template build
